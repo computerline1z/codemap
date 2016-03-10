@@ -1,0 +1,133 @@
+<html>
+	<head>
+		<title>Codemap - IDA plugin for runtrace visualization.</title>
+		<meta http-equiv="X-UA-Compatible">
+		<script type="text/javascript" src="dygraph.js"></script>
+		<script type="text/javascript" src="interaction.js"></script>		
+		<style>	pre {font-family: 'Courier New', monospace;}; </style>		
+	</head>
+	<script>
+		var g_connected=false;
+		var g_seq=1;
+		var g_eip=1;
+		var g_ajax = true;
+		var conn = new WebSocket('ws://localhost:4116', 'codemap');
+		conn.onmessage = function(e) { console.log(e.data); };
+		conn.onopen = function(e) {
+			console.log("Connection established!");
+			g_connected=true;
+		};
+
+		function move_ida(e){
+			if(g_connected==true)
+				conn.send('move ' + e);
+		}
+
+		function checkKeyPressed(e) {			
+			if (e.keyCode != "219" && e.keyCode != "221") return; // [ and ]			
+			if (e.keyCode == "219") g_seq -= 1;
+			if (e.keyCode == "221") g_seq += 1;
+			snapshot( g_seq );		// this will update the g_eip.
+			move_ida( Number(g_eip) - parseInt("--BASEADDR--",16) + parseInt(document.getElementById("n_base").value,16) );			
+		}
+		
+		function searchSnapshotWithQuery(){
+			var param = window.btoa( document.getElementById("n_search").value );
+			location.href = "--REPLACE--?sql=" + param;
+		}
+
+	</script>
+	<body>
+		<input type="text" size=80 value="--SQL--" id="n_search">
+		<input type="button" value="Draw SQL" onclick="searchSnapshotWithQuery()">
+		/ runtime module base : --BASEADDR-- / input IDA static module base : 
+		<input type="text" size=8 value="0" id="n_base">		
+		<div id="graph" style="height:32%;width:95%;" ></div><div id="labels2"></div>
+		<div id="status" style="width:100%;">Move cursor to execution flow graph.</div>
+		<script type="text/javascript">
+		var httpRequest;
+		function makeRequest(url) {
+			if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+				httpRequest = new XMLHttpRequest();
+			} else if (window.ActiveXObject) { // IE
+				try {
+					httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+				} 
+				catch (e) {
+					try {
+						httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+					} 
+					catch (e) {}
+				}
+			}
+
+			if (!httpRequest) {
+				alert('Cannot create an XMLHTTP instance');
+				return false;
+			}
+			httpRequest.onreadystatechange = alertContents;
+			httpRequest.open('GET', url);
+			httpRequest.send();
+		}
+
+		function alertContents() {
+			if (httpRequest.readyState === 4) {
+				if (httpRequest.status === 200) {
+					var tstr = httpRequest.responseText;
+					document.getElementById("status").innerHTML = tstr;
+					g_eip = parseInt(tstr.split('<!--0x')[1].split('-->')[0],16);
+					if(g_connected == true){
+						move_ida( Number(g_eip) - parseInt("--BASEADDR--",16) + parseInt(document.getElementById("n_base").value,16) );
+					}
+				} 
+			}
+		}
+
+		function snapshot(seq) {
+			if(g_ajax==true){
+				return makeRequest("../map--ARCH--.php?base=--BASEADDR--&guid=--REPLACE--&param=" + seq);
+			}			
+		}
+
+		window.addEventListener("keydown", checkKeyPressed, false);
+		s = document.getElementById("status");	
+		g = new Dygraph(
+			document.getElementById("graph"),
+			"data--REPLACE--.csv",
+			{				 
+				interactionModel : {
+				"mousedown" : downV3,
+				"mousemove" : moveV3,
+				"mouseup" : upV3,
+				"click" : clickV3,
+				"dblclick" : dblClickV3,
+				"mousewheel" : scrollV3
+				},
+				labels: [--REGISTERS--],
+				labelsDiv: "labels2",
+				clickCallback: function(e, x, pts) {
+					g_ajax = !g_ajax;
+					if(g_ajax==false){
+						document.getElementById("status").innerHTML = '<font color=red>memory dump is not following graph. click graph to follow again.</font>' + document.getElementById("status").innerHTML;					
+					}
+				},
+				highlightCallback: function(e, x, pts, row) {
+					g_seq = pts[0].xval;
+					snapshot( g_seq );
+				},
+				yAxisLabelWidth: 100,
+				axes: {
+					y: {
+						valueFormatter: function(x) {
+							return '0x'+(x*1).toString(16)
+						},
+						axisLabelFormatter: function(x) {
+							return '0x'+(x*1).toString(16)
+						}
+					}
+				}
+			}
+		);
+		</script>
+	</body>
+</html>
