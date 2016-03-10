@@ -123,8 +123,6 @@ class CodemapHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             guid = 0
             param = 0
             for p in params:
-                if p.startswith('base='):
-                    base = p.split('=')[1]
                 if p.startswith('guid='):
                     guid = p.split('=')[1]
                 if p.startswith('param='):
@@ -180,8 +178,6 @@ class CodemapHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             guid = 0
             param = 0
             for p in params:
-                if p.startswith('base='):
-                    base = p.split('=')[1]
                 if p.startswith('guid='):
                     guid = p.split('=')[1]
                 if p.startswith('param='):
