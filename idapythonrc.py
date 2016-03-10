@@ -97,8 +97,15 @@ def set_range_bp():
     Get address range from user and setup bp to all instruction in that range.
     '''
     ea = ScreenEA()
+    if ea == idaapi.BADADDR:
+        print("Could not get ScreenEA")
+        return
     start_addr = AskAddr(ea, 'Start Addr? (e.g. 0x8000) : ')
     end_addr = AskAddr(ea, 'End Addr? (e.g. 0xC000) : ')
+
+    if start_addr == idaapi.BADADDR or end_addr == idaapi.BADADDR:
+        print("AskAddr error")
+        return
 
     for e in Heads(start_addr, end_addr):
         if get_bpt(e, bpt_t()) is False:
@@ -115,20 +122,21 @@ def save_module_bp():
     global codemap
     try:
         modname = AskStr('', 'module name : ')
-        bpo = ''
-        for func in Functions():
-            for chunk in Chunks(func):
-                chunk_startEA = chunk[0]
-                chunk_endEA = chunk[1]
-                length = chunk_endEA - chunk_startEA
-                if length < codemap.func_min_size:
-                    continue
-                offset = chunk_startEA - get_imagebase()
-                bpo += str(offset) + '\n'
-        print 'bp offset generation complete! ' + str(len(bpo))
-        payload = bpo
-        with open(codemap.homedir + modname + '.bpo', 'wb') as f:
-            f.write(zlib.compress(payload))
+        if modname:
+            bpo = ''
+            for func in Functions():
+                for chunk in Chunks(func):
+                    chunk_startEA = chunk[0]
+                    chunk_endEA = chunk[1]
+                    length = chunk_endEA - chunk_startEA
+                    if length < codemap.func_min_size:
+                        continue
+                    offset = chunk_startEA - get_imagebase()
+                    bpo += str(offset) + '\n'
+            print 'bp offset generation complete! ' + str(len(bpo))
+            payload = bpo
+            with open(codemap.homedir + modname + '.bpo', 'wb') as f:
+                f.write(zlib.compress(payload))
     except:
         traceback.print_exc(file=sys.stdout)
 
@@ -143,26 +151,25 @@ def load_module_bp():
         # get current cursor
         ea = ScreenEA()
         baseaddr = 0
-        modname = ''
+
         # what module is my cursor pointing?
         for i in Modules():
             if ea > i.base and ea < i.base + i.size:
-                modname = i.name.split('\x00')[0]
-                modname = modname.split('\\')[-1:][0]
                 baseaddr = i.base
 
         codemap.base = baseaddr         # this is needed.
         modname = AskStr('', 'module name : ')
-        payload = ''
-        with open(codemap.homedir + modname + '.bpo', 'rb') as f:
-            payload = zlib.decompress(f.read())
-        bps = payload.split()
-        code = bytearray()
-        for bp in bps:
-            code += 'add_bpt({0}, 0, BPT_SOFT);'.format(baseaddr + int(bp))
-        print 'setting breakpoints...'
-        # set bp!
-        exec(str(code))
+        if modname:
+            payload = ''
+            with open(codemap.homedir + modname + '.bpo', 'rb') as f:
+                payload = zlib.decompress(f.read())
+            bps = payload.split()
+            code = bytearray()
+            for bp in bps:
+                code += 'add_bpt({0}, 0, BPT_SOFT);'.format(baseaddr + int(bp))
+            print 'setting breakpoints...'
+            # set bp!
+            exec(str(code))
     except:
         traceback.print_exc(file=sys.stdout)
 
