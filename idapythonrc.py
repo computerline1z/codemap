@@ -103,7 +103,7 @@ def set_range_bp():
     start_addr = AskAddr(ea, 'Start Addr? (e.g. 0x8000) : ')
     end_addr = AskAddr(ea, 'End Addr? (e.g. 0xC000) : ')
 
-    if start_addr == idaapi.BADADDR or end_addr == idaapi.BADADDR:
+    if start_addr is None or end_addr is None:
         print "AskAddr error"
         return
 
