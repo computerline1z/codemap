@@ -42,7 +42,7 @@ you can also make your own SQL statement and specify how to visualize these resu
 
 
 ## Requirements (essential)
-- IDA Pro that supports IDA-python (6.6, 6.8 is recommended)
+- IDA Pro that supports IDA-python (6.6, 6.8 is recommended, don't use cracked version, Codemap might not work)
 - Python 2.x
 
 ## Requirements (recommended)
@@ -64,6 +64,8 @@ There are 5 commands for Codemap.
 This button starts the Codemap tracing.  
 before you press this button, make sure setup break-points where you wan to trace the binary.
 if you press this button again, Codemap will pause. to resume, press the button again.
+You must pause the Codemap to see accurate result. If you don't pause, 
+some trace information can be buffered and not showed in browser screen.
 
 ### ALT-2 : Set Function BP
 
@@ -94,11 +96,17 @@ put your cursor inside the memory area of the loaded module and press this butto
 then Codemap will ask you the name of the file that you stored the break-point information for this module.
 
 
+
+
 ### ALT-5 : Connect Codemap Graph with IDA
 
 This button allows you to connect the IDA with Codemap graph browser.
 if you press this button and refresh the Codemap graph browser, the browser and IDA will be connected.
 after the connection, the IDA screen will follow your cursor from the graph browser.
+
+If you used 'module breakpoint' feature, Codemap will use the base address of the module as the
+base address of EIP, so in such case, you need to specify the 'static module base' address.
+(see video explanation in codemap.kr)
 
 
 
