@@ -249,9 +249,10 @@ class Codemap(object):
 
 
 class BasicArchitecture(object):
+    name = ""
+    reg_list = []
+
     def __init__(self):
-        self.name = ""
-        self.reg_list = []
         self.reg = {}
         self.memory = {}
 
@@ -279,10 +280,11 @@ class BasicArchitecture(object):
 
 
 class X86(BasicArchitecture):
+    name = "x86"
+    reg_list = ['eip', 'eax', 'ebx', 'ecx', 'edx', 'esi',
+                'edi', 'ebp', 'esp', 'arg1', 'arg2', 'arg3', 'arg4']
+
     def __init__(self):
-        self.name = "x86"
-        self.reg_list = ['eip', 'eax', 'ebx', 'ecx', 'edx', 'esi',
-                         'edi', 'ebp', 'esp', 'arg1', 'arg2', 'arg3', 'arg4']
         self.reg = {}
         self.memory = {}
         for i in self.reg_list:
@@ -308,11 +310,11 @@ class X86(BasicArchitecture):
 
 
 class X64(BasicArchitecture):
+    name = "x64"
+    reg_list = ['rip', 'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rbp',
+                'rsp', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']
+
     def __init__(self):
-        self.name = "x64"
-        self.reg_list = ['rip', 'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi',
-                         'rbp', 'rsp', 'r8', 'r9', 'r10', 'r11', 'r12',
-                         'r13', 'r14', 'r15']
         self.reg = {}
         self.memory = {}
         for i in self.reg_list:
