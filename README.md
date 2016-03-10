@@ -74,14 +74,11 @@ starting point of instructions, then press 'C' button.
 - in order to force IDA to recognize a function, put the cursor on the instruction that you think as the 
 starting point of function, then press 'P' button.
 
-The following video effectively explains how this works.
 
 ### ALT-3 : Set Range BP
 
 This button will ask you the address range in which the break-points will be set.
 By using this button, you can set break-points against instructions in the range of 0x8048100 ~ 0x8048200 per se.
-
-The following video effectively explains how this works.
 
 ### ALT-4 : Create/Setup Module BP
 
@@ -96,8 +93,6 @@ Second, while you are debugging an application which uses the module(dll or so),
 put your cursor inside the memory area of the loaded module and press this button again. 
 then Codemap will ask you the name of the file that you stored the break-point information for this module.
 
-The following video effectively explains how this works.
-
 
 ## ALT-5 : Connect Codemap Graph with IDA
 
@@ -105,7 +100,10 @@ This button allows you to connect the IDA with Codemap graph browser.
 if you press this button and refresh the Codemap graph browser, the browser and IDA will be connected.
 after the connection, the IDA screen will follow your cursor from the graph browser.
 
-The following video effectively explains how this works.
 
 
+## Contact for developers
 
+daehee87@kaist.ac.kr
+zzoru@kaist.ac.kr
+dinggul@kaist.ac.kr
