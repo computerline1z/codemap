@@ -94,7 +94,7 @@ put your cursor inside the memory area of the loaded module and press this butto
 then Codemap will ask you the name of the file that you stored the break-point information for this module.
 
 
-## ALT-5 : Connect Codemap Graph with IDA
+### ALT-5 : Connect Codemap Graph with IDA
 
 This button allows you to connect the IDA with Codemap graph browser.
 if you press this button and refresh the Codemap graph browser, the browser and IDA will be connected.
@@ -102,8 +102,8 @@ after the connection, the IDA screen will follow your cursor from the graph brow
 
 
 
-## Contact for developers
+### Contact for developers
 
-daehee87@kaist.ac.kr
-zzoru@kaist.ac.kr
-dinggul@kaist.ac.kr
+- daehee87@kaist.ac.kr
+- zzoru@kaist.ac.kr
+- dinggul@kaist.ac.kr
