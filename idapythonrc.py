@@ -74,7 +74,7 @@ def set_function_bp():
     '''
     ea = ScreenEA()
     if ea == idaapi.BADADDR:
-        print("Could not get ScreenEA")
+        print "Could not get ScreenEA"
         return
 
     for chunk in Chunks(ea):
@@ -98,13 +98,13 @@ def set_range_bp():
     '''
     ea = ScreenEA()
     if ea == idaapi.BADADDR:
-        print("Could not get ScreenEA")
+        print "Could not get ScreenEA"
         return
     start_addr = AskAddr(ea, 'Start Addr? (e.g. 0x8000) : ')
     end_addr = AskAddr(ea, 'End Addr? (e.g. 0xC000) : ')
 
     if start_addr == idaapi.BADADDR or end_addr == idaapi.BADADDR:
-        print("AskAddr error")
+        print "AskAddr error"
         return
 
     for e in Heads(start_addr, end_addr):
