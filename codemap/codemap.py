@@ -231,7 +231,7 @@ class BasicArchitecture(object):
     def dict_all(self):
         _dict = {}
         _dict.update(self.reg)
-        for k in self.memory.keys():
+        for k in self.memory:
             _dict.update({'m_' + k: self.memory[k]})
         return _dict
 
@@ -241,11 +241,8 @@ class X86(BasicArchitecture):
     reg_list = 'eip eax ebx ecx edx esi edi ebp esp arg1 arg2 arg3 arg4'.split()
 
     def __init__(self):
-        self.reg = {}
-        self.memory = {}
-        for i in self.reg_list:
-            self.reg[i] = 0  # int
-            self.memory[i] = ''
+        self.reg = {k: 0 for k in self.reg_list}  # int
+        self.memory = {k: '' for k in self.reg_list}
 
     def get_stack_arg(self, n):
         esp = idc.GetRegValue('esp') + n * 4
