@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from idaapi import *
 import idautils
 import idc
@@ -16,7 +19,7 @@ class Codemap(object):
     def __init__(self):
         self.homedir = ''
         sysname = platform.system()
-        if sysname == 'Darwin' or sysname == 'Linux':
+        if sysname in ('Darwin', 'Linux'):
             self.homedir = '%s/.idapro/codemap/' % os.environ['HOME']
         elif sysname == 'Windows':
             self.homedir = '%s\\Hex-Rays\\IDA Pro\\codemap\\' % os.environ['APPDATA']
@@ -43,28 +46,28 @@ class Codemap(object):
         self.thread_lock = threading.Lock()
         self.thread_http = None
         self.thread_ws = None
-        self.uid = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
+        self.uid = '{:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
         self.db_name = 'codemap.db'
+        self.db_file_path = os.path.join(self.homedir, self.db_name)
         self.websocket_server = None
         self.web_server = None
         self.seq_dict = {}
         self.init_codemap()
-
         self.query = ''
 
-        if os.path.exists(self.homedir + 'codemap.db'):
+        if os.path.exists(self.db_file_path):
             try:
-                os.remove(self.homedir + 'codemap.db')
+                os.remove(self.db_file_path)
             except:
-                print 'Codemap Database is locked.'
-                print 'Please close another instance of Codemap and run IDA again'
+                print('Codemap Database is locked.')
+                print('Please close another instance of Codemap and run IDA again')
 
     # init_arch func must called in BP.
     def init_arch(self):
         try:
-            if hasattr(idaapi, 'get_inf_structure'):
+            try:
                 info = idaapi.get_inf_structure()
-            else:
+            except AttributeError:
                 info = idaapi.cvar.inf
             bitness = idc.GetSegmentAttr(
                 list(idautils.Segments())[0], idc.SEGATTR_BITNESS)
@@ -75,24 +78,19 @@ class Codemap(object):
                 bitness = 32
             elif bitness == 2:
                 bitness = 64
-            print bitness
+            print(bitness)
             if info.procName == 'metapc':
                 if bitness == 64:
                     self.arch = X64()
                 elif bitness == 32:
                     self.arch = X86()
-
             else:
-                print 'TODO: implement many architecture :)'
+                print('TODO: implement many architectures :)')
         except:
-            print 'init_arch except'
-
-        return
+            print('init_arch except')
 
     def init_codemap(self):
-        self.uid = datetime.datetime.fromtimestamp(
-            time.time()).strftime('%Y%m%d%H%M%S')
-
+        self.uid = '{:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
         if not os.path.exists(self.homedir):
             os.makedirs(self.homedir)
 
@@ -107,56 +105,31 @@ class Codemap(object):
         self.start = False
         self.pause = False
         self.regs = '"id","eip"'
-        return
 
     def is_buffer_full(self):
         return len(self.bpevent_buffer) >= self.bpevent_bufsize
 
     def clear_bpevent_buffer(self):
         self.bpevent_buffer = []
-        return
 
     def db_create(self):
         try:
-            if self.sqlite_conn is None:
-                self.sqlite_conn = sqlite3.connect(self.homedir + self.db_name)
+            self.sqlite_conn = self.sqlite_conn or sqlite3.connect(self.db_file_path)
             self.sqlite_cursor = self.sqlite_conn.cursor()
 
             if self.arch.name is 'x86':
-                state_create = 'CREATE TABLE trace{0}'.format(
-                    self.uid) + '(id INTEGER PRIMARY KEY AUTOINCREMENT, '
-                for i in range(0, len(self.arch.reg_list)):
-                    state_create += self.arch.reg_list[i]
-                    state_create += ' INT8, '
-                    state_create += 'm_' + self.arch.reg_list[i]
-                    state_create += ' VARCHAR(2048),'
-                state_create = state_create.rstrip(',')
-                state_create += ');'
-                print state_create
-                self.sqlite_cursor.execute(state_create)
-
-            # sqlite3 does not support UINT8... fuck...
-            if self.arch.name is 'x64':
-                state_create = 'CREATE TABLE trace{0}'.format(
-                    self.uid) + '(id INTEGER PRIMARY KEY AUTOINCREMENT, '
-                for i in range(0, len(self.arch.reg_list)):
-                    if i == len(self.arch.reg_list) - 1:
-                        state_create += self.arch.reg_list[i]
-                        state_create += ' VARCHAR(32), '
-                        state_create += 'm_' + self.arch.reg_list[i]
-                        state_create += ' VARCHAR(2048)'
-                    else:
-                        state_create += self.arch.reg_list[i]
-                        state_create += ' VARCHAR(32), '
-                        state_create += 'm_' + self.arch.reg_list[i]
-                        state_create += ' VARCHAR(2048),'
-                state_create += ');'
-                self.sqlite_cursor.execute(state_create)
-
+                fmt = '{0} INT8, m_{0} VARCHAR(2048)'
+            elif self.arch.name is 'x64':  # sqlite3 does not support UINT8... fuck...
+                fmt = '{0} VARCHAR(32), m_{0} VARCHAR(2048)'
+            lines = ','.join(fmt.format(reg) for reg in self.arch.reg_list)
+            fmt = 'CREATE TABLE trace{}(id INTEGER PRIMARY KEY AUTOINCREMENT, {});'
+            state_create = fmt.format(self.uid, lines)
+            print state_create
+            self.sqlite_cursor.execute(state_create)
             return True
         except sqlite3.Error as e:
-            print 'DB create error! Error message:' + e.args[0]
-            print 'Create statement: ' + state_create
+            print('DB create error! Error message:' + e.args[0])
+            print('Create statement: ' + state_create)
             return False
 
     def db_insert_queue(self):
@@ -166,36 +139,23 @@ class Codemap(object):
             self.db_insert()
             if self.bpevent_bufsize < self.bpevent_bufsize_max:
                 self.bpevent_bufsize *= 2
-                print 'buffser size up to ', self.bpevent_bufsize
+                print('buffser size up to ', self.bpevent_bufsize)
 
     def db_insert(self):
         try:
-            if self.sqlite_conn is None:
-                self.sqlite_conn = sqlite3.connect(self.homedir + self.db_name)
+            self.sqlite_conn = self.sqlite_conn or sqlite3.connect(self.db_file_path)
             self.sqlite_cursor = self.sqlite_conn.cursor()
             state_insert = "insert into trace{0} ".format(self.uid)
 
-            state_cols = '('
-            for i in range(0, len(self.arch.reg_list)):
-                if(i == len(self.arch.reg_list) - 1):
-                    state_cols += self.arch.reg_list[i] + ', '
-                    state_cols += 'm_' + self.arch.reg_list[i]
-                else:
-                    state_cols += self.arch.reg_list[i] + ', '
-                    state_cols += 'm_' + self.arch.reg_list[i] + ', '
-            state_cols += ')'
+            fmt = '{0}, m_{0}'
+            lines = ', '.join(fmt.format(reg) for reg in self.arch.reg_list)
+            state_cols = '({})'.format(lines)
 
-            state_vals = 'VALUES('
-            for i in range(0, len(self.arch.reg_list)):
-                if(i == len(self.arch.reg_list) - 1):
-                    state_vals += ":" + self.arch.reg_list[i] + ', '
-                    state_vals += ":m_" + self.arch.reg_list[i]
-                else:
-                    state_vals += ":" + self.arch.reg_list[i] + ', '
-                    state_vals += ":m_" + self.arch.reg_list[i] + ', '
-            state_vals += ')'
+            fmt = ':{0}, :m_{0}'
+            lines = ', '.join(fmt.format(reg) for reg in self.arch.reg_list)
+            state_vals = 'VALUES({})'.format(lines)
 
-            state_insert = state_insert + ' ' + state_cols + ' ' + state_vals
+            state_insert = ' '.join(state_insert, state_cols, state_vals)
             with self.thread_lock:
                 self.sqlite_cursor.executemany(
                     state_insert, self.bpevent_buffer)
@@ -204,8 +164,8 @@ class Codemap(object):
 
             return True
         except sqlite3.Error as e:
-            print 'DB insert error! Error message: ' + e.args[0]
-            print 'Insert statement: ' + state_insert
+            print('DB insert error! Error message: ' + e.args[0])
+            print('Insert statement: ' + state_insert)
             return False
 
     def set_data(self):
@@ -214,7 +174,7 @@ class Codemap(object):
 
     def start_webserver(self):
         def webthread_start():
-            print time.asctime(), "Server Starts - %s:%s" % (self.server, self.port)
+            print(time.asctime(), "Server Starts - %s:%s" % (self.server, self.port))
             self.web_server = CodemapHTTPServer(
                 (self.server, self.port), CodemapHTTPRequestHandler)
             self.web_server.set_codemap(self)
@@ -224,9 +184,9 @@ class Codemap(object):
             except KeyboardInterrupt:
                 pass
             self.web_server.server_close()
-            print time.asctime(), "Server Stops - %s:%s" % (self.server, self.port)
+            print(time.asctime(), "Server Stops - %s:%s" % (self.server, self.port))
 
-        if self.thread_http is not None:
+        if self.thread_http:
             pass
         self.thread_http = threading.Thread(target=webthread_start)
         self.thread_http.daemon = True
@@ -236,14 +196,14 @@ class Codemap(object):
         def ws_start():
             self.websocket_server = SimpleWebSocketServer('', 4116, CodemapWSD)
             self.websocket_server.serveforever()
-        if self.thread_ws is not None:
+        if self.thread_ws:
             return
         self.thread_ws = threading.Thread(target=ws_start)
         self.thread_ws.daemon = True
         self.thread_ws.start()
 
-    def ws_send(msg):
-        if self.websocket_server is not None:
+    def ws_send(self, msg):
+        if self.websocket_server:
             for conn in self.wsbsocket_server.connections.itervalues():
                 conn.sendMessage(msg)
 
@@ -265,10 +225,7 @@ class BasicArchitecture(object):
         for i in self.reg_list:
             # consider type of reg[i].
             self.memory[i] = idaapi.dbg_read_memory(int(self.reg[i]), mem_size)
-            if self.memory[i] is not None:
-                self.memory[i] = self.memory[i].encode('hex')
-            else:
-                self.memory[i] = ''
+            self.memory[i] = self.memory[i].encode('hex') if self.memory[i] else ''
 
     # TODO: Rename!!!!
     def dict_all(self):
@@ -281,19 +238,17 @@ class BasicArchitecture(object):
 
 class X86(BasicArchitecture):
     name = "x86"
-    reg_list = ['eip', 'eax', 'ebx', 'ecx', 'edx', 'esi',
-                'edi', 'ebp', 'esp', 'arg1', 'arg2', 'arg3', 'arg4']
+    reg_list = 'eip eax ebx ecx edx esi edi ebp esp arg1 arg2 arg3 arg4'.split()
 
     def __init__(self):
         self.reg = {}
         self.memory = {}
         for i in self.reg_list:
-            self.reg[i] = 0        # int
+            self.reg[i] = 0  # int
             self.memory[i] = ''
 
     def get_stack_arg(self, n):
-        esp = idc.GetRegValue('esp')
-        esp += n * 4
+        esp = idc.GetRegValue('esp') + n * 4
         val = idaapi.dbg_read_memory(esp, 4)[::-1].encode('hex')
         return int(val, 16)
 
@@ -311,12 +266,9 @@ class X86(BasicArchitecture):
 
 class X64(BasicArchitecture):
     name = "x64"
-    reg_list = ['rip', 'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rbp',
-                'rsp', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']
+    reg_list = '''rip rax rbx rcx rdx rsi rdi rbp rsp r8
+                  r9 r10 r11 r12 r13 r14 r15'''.split()
 
     def __init__(self):
-        self.reg = {}
-        self.memory = {}
-        for i in self.reg_list:
-            self.reg[i] = ''        # string
-            self.memory[i] = ''
+        self.reg = {k: '' for k in self.reg_list}  # string
+        self.memory = {k: '' for k in self.reg_list}
