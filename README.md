@@ -130,10 +130,10 @@ You can use following SQL statements for example.
 - select eax from trace where ebx*3 = edx
 - select eip from trace limit 100
 - select eax from trace order by eax
-- select eip from trace where m_edi like 'haha'   (m_ prefix means the memory dump pointed by register)
-- select eip from trace where m_arg1 like 'haha'   (in x86, arg1~arg4 is equivalent to *(esp+4) ~ *(esp+16))
-- select ecx from trace where m_ecx like 'haha' order by edx limit 10
-- select edx+1000 from trace where esi<edi and eax>100
+- select eip from trace where m_edi like 'bla'   (m_ prefix means the memory dump pointed by register)
+- select eip from trace where m_arg1 like 'bla'   (in x86, arg1~arg4 is equivalent to *(esp+4) ~ *(esp+16))
+- select ecx from trace where m_ecx like 'bla' order by edx limit 10
+- select edx+1000 from trace where esi < edi and eax > 100
 
 
 ### Contact for developers
@@ -147,6 +147,8 @@ You can use following SQL statements for example.
 
 KAIST CysecLab (Graduate School of Information Security, School of Computing)
 Advisor (Prof. B. Kang)
+
+
 
 
 
