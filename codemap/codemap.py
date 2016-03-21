@@ -117,14 +117,9 @@ class Codemap(object):
             self.sqlite_conn = self.sqlite_conn or sqlite3.connect(self.db_file_path)
             self.sqlite_cursor = self.sqlite_conn.cursor()
 
-            if self.arch.name is 'x86':
-                fmt = '{0} INT8, m_{0} VARCHAR(2048)'
-            elif self.arch.name is 'x64':  # sqlite3 does not support UINT8... fuck...
-                fmt = '{0} VARCHAR(32), m_{0} VARCHAR(2048)'
+            fmt = self.arch.db_fmt
             lines = ','.join(fmt.format(reg) for reg in self.arch.reg_list)
-            fmt = 'CREATE TABLE trace{}(id INTEGER PRIMARY KEY AUTOINCREMENT, {});'
-            state_create = fmt.format(self.uid, lines)
-            print state_create
+            state_create = 'CREATE TABLE trace{}(id INTEGER PRIMARY KEY AUTOINCREMENT, {});'.format(self.uid, lines)
             self.sqlite_cursor.execute(state_create)
             return True
         except sqlite3.Error as e:
@@ -209,8 +204,9 @@ class Codemap(object):
 
 
 class BasicArchitecture(object):
-    name = ""
+    name = ''
     reg_list = []
+    db_fmt = ''
 
     def __init__(self):
         self.reg = {}
@@ -237,8 +233,9 @@ class BasicArchitecture(object):
 
 
 class X86(BasicArchitecture):
-    name = "x86"
+    name = 'x86'
     reg_list = 'eip eax ebx ecx edx esi edi ebp esp arg1 arg2 arg3 arg4'.split()
+    db_fmt = '{0} INT8, m_{0} VARCHAR(2048)'
 
     def __init__(self):
         self.reg = {k: 0 for k in self.reg_list}  # int
@@ -262,9 +259,10 @@ class X86(BasicArchitecture):
 
 
 class X64(BasicArchitecture):
-    name = "x64"
+    name = 'x64'
     reg_list = '''rip rax rbx rcx rdx rsi rdi rbp rsp r8
                   r9 r10 r11 r12 r13 r14 r15'''.split()
+    db_fmt = '{0} VARCHAR(32), m_{0} VARCHAR(2048)'
 
     def __init__(self):
         self.reg = {k: '' for k in self.reg_list}  # string
