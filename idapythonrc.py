@@ -46,8 +46,11 @@ def start_trace():
         codemap.query = "select rip from trace{0}".format(codemap.uid)
 
     # if no baseaddr is configured then 0
-    codemap.skel = codemap.skel.replace('--BASEADDR--',
-        (hex(codemap.base).replace('0x', '') if codemap.base else '0')
+    if codemap.base == 0:
+        codemap.skel = codemap.skel.replace('--BASEADDR--', '0')
+    else:
+        codemap.skel = codemap.skel.replace(
+            '--BASEADDR--', hex(codemap.base).replace('0x', ''))
 
     print('start HTTP server')
     # start HTTP server
