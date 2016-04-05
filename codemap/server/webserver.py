@@ -57,9 +57,18 @@ class CodemapHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            self.wfile.write(codemap.skel.replace(
-                '--REGISTERS--', codemap.regs).replace('--SQL--', codemap.query))
 
+            codemap.skel = codemap.skel.replace(
+                '--REGISTERS--', codemap.regs).replace('--SQL--', codemap.query).replace('--ARCH--', codemap.arch.name)
+
+            if codemap.base == 0:
+                codemap.skel = codemap.skel.replace('--BASEADDR--', '0')
+            else:
+                codemap.skel = codemap.skel.replace('--BASEADDR--', hex(codemap.base).replace('0x', ''))
+            
+            self.wfile.write(codemap.skel)
+
+            #print codemap.skel
         # dynamically generate csv data set.
         elif page == 'data' + codemap.uid + '.csv':
             codemap.seq_dict[codemap.uid] = []

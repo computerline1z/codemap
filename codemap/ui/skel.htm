@@ -41,8 +41,8 @@
 		<input type="text" size=80 value="--SQL--" id="n_search">
 		<input type="button" value="Draw SQL" onclick="searchSnapshotWithQuery()">
 		/ runtime module base : --BASEADDR-- / input IDA static module base : 
-		<input type="text" size=8 value="0" id="n_base">		
-		/ <font color=red>pause Codemap to see accurate trace result.</font>
+		<input type="text" size=8 value="0" id="n_base">
+		/ <font color=red>pause Codemap to see accurate trace result.</font>	
 		<div id="graph" style="height:32%;width:95%;" ></div><div id="labels2"></div>
 		<div id="status" style="width:100%;">Move cursor to execution flow graph.</div>
 		<script type="text/javascript">
@@ -126,7 +126,7 @@
 							return '0x'+(x*1).toString(16)
 						}
 					}
-				}
+				},
 			}
 		);
 		</script>
