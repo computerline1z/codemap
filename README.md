@@ -51,6 +51,8 @@ you can also make your own SQL statement and specify how to visualize these resu
 
 ## How to install
 - run `python install.py` from Codemap home directory
+Modified Version : 
+- Copy "codemap" folder and codemaploader.py to <IDADir>/plugins, the codemap command is load in IDA-View Context Menu
 
 ## How to use
 Basically, codemap hooks IDA and place its own break-point event handler.
