@@ -50,7 +50,7 @@ you can also make your own SQL statement and specify how to visualize these resu
 - Large screen / Dual monitor environment
 
 ## How to install
-- run `python install.py` from Codemap home directory
+
 Modified Version : 
 - Copy "codemap" folder and codemaploader.py to <IDADir>/plugins, the codemap command is load in IDA-View Context Menu
 
